@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkillSwap – trade what you know for what you want to learn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF3F1;--ink:#10261F;--teal:#1F6F6B;--gold:#E9B44C;--card:#fff;--line:#cfdcd7}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+header,main,footer{max-width:1000px;margin:0 auto;padding:0 20px}
+header{display:flex;justify-content:space-between;align-items:center;padding-top:20px;padding-bottom:20px}
+.logo{font-weight:800;font-size:1.3rem}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:10px 18px;background:var(--teal);color:#fff;font-weight:600}
+button.alt{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+input{font:inherit;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;width:100%}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center;padding:40px 0 60px}
+h1{font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.05;margin:0 0 16px;font-weight:800}
+.hero p{font-size:1.15rem;max-width:44ch}
+.swap{display:grid;gap:12px}
+.pair{background:var(--card);border-radius:14px;padding:16px 18px;border:1.5px solid var(--line)}
+.pair b{display:block;margin-bottom:6px}
+.arrow{text-align:center;font-size:1.6rem;color:var(--teal)}
+.tag{display:inline-block;padding:3px 12px;border-radius:99px;font-size:.9rem;margin:2px 4px 2px 0}
+.teach{background:var(--teal);color:#fff}.learn{background:var(--gold);color:var(--ink)}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding-bottom:50px}
+.how h3{margin:0 0 4px}
+section.panel{background:var(--card);border-radius:14px;padding:22px;margin-bottom:20px;border:1.5px solid var(--line)}
+.row{display:flex;gap:10px;margin:10px 0}
+.hidden{display:none}
+.tag button{background:none;color:inherit;padding:0 0 0 6px;font-size:1rem}
+.match{border-top:1px solid var(--line);padding:14px 0}
+.match:first-child{border-top:0}
+.msg{color:#a33;min-height:1.4em}
+.muted{opacity:.7}
+footer{padding:30px 20px;opacity:.7}
+@media(max-width:760px){.hero,.how{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:no-preference){.pair{transition:transform .2s}.pair:hover{transform:translateY(-3px)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">SkillSwap</div>
+  <button id="logout" class="alt hidden">Log out</button>
+</header>
+
+<main>
+  <!-- Visitors see this -->
+  <div id="guest">
+    <div class="hero">
+      <div>
+        <h1>Trade what you know for what you want to learn.</h1>
+        <p>List a skill you can teach and one you want to learn. SkillSwap finds neighbors who want the opposite, so nobody pays for a lesson.</p>
+      </div>
+      <div class="swap" aria-label="Example of a match">
+        <div class="pair"><b>Asha</b><span class="tag teach">teaches Guitar</span><span class="tag learn">wants Spanish</span></div>
+        <div class="arrow" aria-hidden="true">⇅</div>
+        <div class="pair"><b>Luis</b><span class="tag teach">teaches Spanish</span><span class="tag learn">wants Guitar</span></div>
+      </div>
+    </div>
+    <div class="how">
+      <div><h3>1. List your skills</h3><p>Add what you can teach and what you want to learn.</p></div>
+      <div><h3>2. See your matches</h3><p>We compare your lists with everyone else's.</p></div>
+      <div><h3>3. Swap lessons</h3><p>Meet up and teach each other.</p></div>
+    </div>
+    <section class="panel" style="max-width:420px">
+      <h2 style="margin-top:0">Join or log in</h2>
+      <div class="row"><input id="name" placeholder="Your name (for new accounts)" autocomplete="name"></div>
+      <div class="row"><input id="email" type="email" placeholder="Email" autocomplete="email"></div>
+      <div class="row"><input id="pass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password"></div>
+      <div class="row"><button id="signup">Create account</button><button id="login" class="alt">Log in</button></div>
+      <div class="msg" id="authMsg" role="alert"></div>
+    </section>
+  </div>
+
+  <!-- Signed-in members see this -->
+  <div id="app" class="hidden">
+    <section class="panel">
+      <h2 style="margin-top:0">Your profile</h2>
+      <div class="row"><input id="city" placeholder="Your city or area"><button id="saveCity">Save city</button></div>
+    </section>
+    <section class="panel">
+      <h2 style="margin-top:0">Skills I can teach</h2>
+      <div id="teachList"></div>
+      <div class="row"><input id="teachIn" placeholder="e.g. Guitar"><button data-add="teach">Add</button></div>
+    </section>
+    <section class="panel">
+      <h2 style="margin-top:0">Skills I want to learn</h2>
+      <div id="learnList"></div>
+      <div class="row"><input id="learnIn" placeholder="e.g. Spanish"><button data-add="learn">Add</button></div>
+    </section>
+    <section class="panel">
+      <h2 style="margin-top:0">Your matches</h2>
+      <div id="matches" class="muted">Add a few skills to see matches.</div>
+    </section>
+  </div>
+</main>
+<footer>Built with HTML, CSS, JavaScript and Supabase.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// 1. Paste your own values from Supabase > Project Settings > API
+const SUPABASE_URL = 'https://aqvipneshebjotyvcweh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_bZDNYaen4GjFvWjoCRDJgQ_Nf2lg5mr';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ---------- Auth ----------
+$('#signup').onclick = async () => {
+  const { error } = await sb.auth.signUp({
+    email: $('#email').value, password: $('#pass').value,
+    options: { data: { name: $('#name').value.trim() || 'Neighbor' } }
+  });
+  $('#authMsg').textContent = error ? error.message : 'Account created. Log in to continue.';
+};
+$('#login').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('#email').value, password: $('#pass').value });
+  if (error) $('#authMsg').textContent = error.message;
+};
+$('#logout').onclick = () => sb.auth.signOut();
+
+// ---------- Show the right screen ----------
+async function render(session) {
+  $('#guest').classList.toggle('hidden', !!session);
+  $('#app').classList.toggle('hidden', !session);
+  $('#logout').classList.toggle('hidden', !session);
+  if (!session) return;
+  // Create the profile row the first time someone logs in
+  await sb.from('profiles').upsert(
+    { id: session.user.id, name: session.user.user_metadata.name || 'Neighbor' },
+    { onConflict: 'id', ignoreDuplicates: true });
+  const { data } = await sb.from('profiles').select('city').eq('id', session.user.id).single();
+  $('#city').value = (data && data.city) || '';
+  refresh();
+}
+
+// ---------- Skills ----------
+async function refresh() { await loadSkills(); await loadMatches(); }
+
+async function loadSkills() {
+  const { data: { user } } = await sb.auth.getUser();
+  const { data, error } = await sb.from('skills').select('*').eq('user_id', user.id).order('name');
+  if (error) return alert(error.message);
+  for (const kind of ['teach', 'learn']) {
+    $('#' + kind + 'List').innerHTML = data.filter(s => s.kind === kind).map(s =>
+      `<span class="tag ${kind}">${esc(s.name)}<button data-del="${s.id}" aria-label="Remove ${esc(s.name)}">×</button></span>`
+    ).join('') || '<span class="muted">Nothing yet.</span>';
+  }
+}
+
+document.addEventListener('click', async e => {
+  const kind = e.target.dataset.add, id = e.target.dataset.del;
+  if (kind) {
+    const input = $('#' + kind + 'In'), name = input.value.trim();
+    if (!name) return;
+    const { error } = await sb.from('skills').insert({ name, kind });
+    if (error && !error.message.includes('duplicate')) return alert(error.message);
+    input.value = ''; refresh();
+  }
+  if (id) { await sb.from('skills').delete().eq('id', id); refresh(); }
+});
+
+$('#saveCity').onclick = async () => {
+  const { data: { user } } = await sb.auth.getUser();
+  const { error } = await sb.from('profiles').update({ city: $('#city').value.trim() }).eq('id', user.id);
+  if (error) alert(error.message);
+};
+
+// ---------- Matches ----------
+async function loadMatches() {
+  const { data, error } = await sb.rpc('find_matches');
+  const box = $('#matches');
+  if (error) return box.textContent = error.message;
+  if (!data.length) { box.className = 'muted'; box.textContent = 'No matches yet. Try adding more skills.'; return; }
+  box.className = '';
+  data.sort((a, b) => (b.they_teach.length + b.they_learn.length) - (a.they_teach.length + a.they_learn.length));
+  box.innerHTML = data.map(m => `<div class="match"><b>${esc(m.pname)}</b>${m.pcity ? ' · ' + esc(m.pcity) : ''}
+    ${m.they_teach.length ? '<div>Can teach you: ' + m.they_teach.map(t => `<span class="tag teach">${esc(t)}</span>`).join('') + '</div>' : ''}
+    ${m.they_learn.length ? '<div>Wants to learn from you: ' + m.they_learn.map(t => `<span class="tag learn">${esc(t)}</span>`).join('') + '</div>' : ''}
+    ${m.they_teach.length && m.they_learn.length ? '<div><b>Perfect swap!</b></div>' : ''}</div>`).join('');
+}
+
+sb.auth.getSession().then(({ data }) => render(data.session));
+sb.auth.onAuthStateChange((_e, session) => render(session));
+</script>
+</body>
+</html>
